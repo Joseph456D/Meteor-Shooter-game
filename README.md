@@ -12,7 +12,9 @@ Link of original game by the owner
 -Added time played on top-right corner to show the time survived
 
 ##########################
+
 Still in progress features 
+
 ##########################
 
 -Added top score to the game over screen
