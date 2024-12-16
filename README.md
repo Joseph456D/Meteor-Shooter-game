@@ -14,6 +14,7 @@ Link of original game by the owner
 ##########################
 Still in progress features 
 ##########################
+
 -Added top score to the game over screen
 
 -Added restart option to play the game again without reruning the file
