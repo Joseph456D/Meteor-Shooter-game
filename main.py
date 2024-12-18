@@ -82,7 +82,7 @@ WINDOW_WIDTH, WINDOW_HEIGHT = 1280, 720
 display_surface = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 
 clock = pygame.time.Clock()
-pygame.display.set_caption("Asteroid")
+pygame.display.set_caption("Meteor Shooter")
 
 ship_surf = pygame.image.load('./Resources/ship.png').convert_alpha()
 ship_rect = ship_surf.get_rect(center=(WINDOW_WIDTH/2, WINDOW_HEIGHT/2))
