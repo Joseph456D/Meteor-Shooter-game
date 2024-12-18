@@ -19,4 +19,6 @@ Link of original game by the owner
 
 -Pause and Settings Menu
 
--Achievements (eg. Destroyed x numbers of meteors, Survive for x amount of time, )
+-Achievements (eg. Destroyed x numbers of meteors, Survive for x amount of time )
+
+-Resizable window
