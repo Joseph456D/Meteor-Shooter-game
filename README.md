@@ -17,4 +17,6 @@ Link of original game by the owner
 
 # Still in progress features 
 
--(Currently None) 
+-Pause and Settings Menu
+
+-Achievements (eg. Destroyed x numbers of meteors, Survive for x amount of time, )
