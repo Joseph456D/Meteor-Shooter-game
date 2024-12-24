@@ -204,11 +204,13 @@ while True:
         display_surface.blit(game_over_surf, game_over_rect)
 
         # Display buttons
+        # Display Quit button
         pygame.draw.rect(display_surface, button_color, quit_button_rect)
         quit_button_text = font.render("Quit", True, (255, 255, 255))
         quit_button_text_rect = quit_button_text.get_rect(center=quit_button_rect.center)
         display_surface.blit(quit_button_text, quit_button_text_rect)
 
+        # Display Restart button
         pygame.draw.rect(display_surface, button_color, restart_button_rect)
         restart_button_text = font.render("Restart", True, (255, 255, 255))
         restart_button_text_rect = restart_button_text.get_rect(center=restart_button_rect.center)
