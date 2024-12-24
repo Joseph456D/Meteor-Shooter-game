@@ -17,8 +17,14 @@ Link of original game by the owner
 
 # Still in progress features 
 
--Pause and Settings Menu
+-Change ship,buttons and meteor size to dynamic
 
--Achievements (eg. Destroyed x numbers of meteors, Survive for x amount of time )
+-Add the start button
 
--Resizable window
+-Add pause menu (mute, score, high score, time, achievement tab,  restart, quit)
+
+-Add mute button on the left-bottom corner
+
+-Achievements and achievements tab (opened by a button on right corner)
+
+-Mute and achievement buttons only available at game over and pause screens
