@@ -1,4 +1,5 @@
 import pygame, sys
+import json
 from random import randint, uniform
 
 # Update the laser list to remove lasers that go off-screen
@@ -64,18 +65,25 @@ def restart_game():
     pygame.event.set_grab(True)
     start_time = pygame.time.get_ticks()  # Reset the game start time
 
-# Load the top score from a file
+# Load the high score from a JSON file
 def load_high_score():
     try:
-        with open('./Data/high_score.txt', 'r') as file:
-            return int(file.read())
-    except FileNotFoundError:
-        return 0  # Return 0 if the file does not exist
+        with open('./Data/high_score.json', 'r') as file:
+            data = json.load(file)  # Load the JSON data
+            return data.get("high_score", 0)  # Get the high score or return 0 if not found
+    except (FileNotFoundError, json.JSONDecodeError):  # Handle file not found or invalid JSON
+        return 0  # Return 0 if the file does not exist or there is an error
 
-# Save the top score to a file
+
+# Save the high score to a JSON file
 def save_high_score():
-    with open('./Data/high_score.txt', 'w') as file:
-        file.write(str(high_score))
+    data = {"high_score": high_score}  # Create a dictionary to store the high score
+    try:
+        with open('./Data/high_score.json', 'w') as file:
+            json.dump(data, file, indent=4)  # Write the JSON data to the file
+    except IOError as e:
+        print(f"Error saving high score: {e}")  # Print an error if saving fails
+
 
 pygame.init()
 WINDOW_WIDTH, WINDOW_HEIGHT = 1280, 720
