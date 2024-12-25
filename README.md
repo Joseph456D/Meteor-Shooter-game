@@ -15,15 +15,15 @@ Link of original game by the owner
 
 -Added restart option to play the game again without reruning the file
 
-# Still in progress features 
+-Change ship, buttons and meteor size to dynamic (score's box is still static has to change it)
 
--Change ship,buttons and meteor size to dynamic
+-Add mute button on the left-bottom corner
+
+# Still in progress features 
 
 -Add the start button
 
 -Add pause menu (mute, score, high score, time, achievement tab,  restart, quit)
-
--Add mute button on the left-bottom corner
 
 -Achievements and achievements tab (opened by a button on right corner)
 
