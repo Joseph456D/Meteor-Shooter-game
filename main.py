@@ -51,7 +51,7 @@ def meteor_update(meteor_list, speed=500):
 
 # Restart the game by resetting variables
 def restart_game():
-    global score, game_over, ship_rect, laser_list, meteor_list, can_shoot, shoot_time, start_time, top_score
+    global score, game_over, ship_rect, laser_list, meteor_list, can_shoot, shoot_time, start_time, high_score
 
     score = 0
     game_over = False
@@ -65,17 +65,17 @@ def restart_game():
     start_time = pygame.time.get_ticks()  # Reset the game start time
 
 # Load the top score from a file
-def load_top_score():
+def load_high_score():
     try:
-        with open('./Resources/top_score.txt', 'r') as file:
+        with open('./Data/high_score.txt', 'r') as file:
             return int(file.read())
     except FileNotFoundError:
         return 0  # Return 0 if the file does not exist
 
 # Save the top score to a file
-def save_top_score():
-    with open('./Resources/top_score.txt', 'w') as file:
-        file.write(str(top_score))
+def save_high_score():
+    with open('./Data/high_score.txt', 'w') as file:
+        file.write(str(high_score))
 
 pygame.init()
 WINDOW_WIDTH, WINDOW_HEIGHT = 1280, 720
@@ -115,13 +115,13 @@ button_color = (255, 0, 0)
 
 # Initialize score, top score, and game start time
 score = 0
-top_score = load_top_score()  # Load the top score from the file
+high_score = load_high_score()  # Load the top score from the file
 start_time = pygame.time.get_ticks()  # Set the initial start time for the game
 
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            save_top_score()  # Save the top score when quitting
+            save_high_score()  # Save the top score when quitting
             pygame.quit()
             sys.exit()
 
@@ -146,7 +146,7 @@ while True:
 
         if event.type == pygame.MOUSEBUTTONDOWN and game_over:
             if quit_button_rect.collidepoint(event.pos):
-                save_top_score()  # Save top score before quitting
+                save_high_score()  # Save top score before quitting
                 pygame.quit()
                 sys.exit()
 
@@ -185,6 +185,12 @@ while True:
     display_score()
     display_time_played()  # Display the time played in the top-right corner
 
+    # Display the top score
+    high_score_text = f"High Score: {high_score}"
+    high_score_surf = font.render(high_score_text, True, (255, 255, 255))
+    high_score_rect = high_score_surf.get_rect(topleft=(10, 10))  # Position in top-left corner
+    display_surface.blit(high_score_surf, high_score_rect)
+
     # Display meteors and lasers
     for meteor_tuple in meteor_list:
         display_surface.blit(meteor_surf, meteor_tuple[0])
@@ -196,7 +202,7 @@ while True:
     if game_over:
 
         # Save the top score if the current score is greater
-        top_score = max(top_score, score)
+        high_score = max(high_score, score)
 
         game_over_text = "Game Over!"
         game_over_surf = font.render(game_over_text, True, (255, 0, 0))
@@ -228,10 +234,10 @@ while True:
         display_surface.blit(text_surf, text_rect)
         pygame.draw.rect(display_surface, 'white', text_rect.inflate(30, 40), width=10, border_radius=5)
 
-        # Display the top score
-        top_score_text = f"Top Score: {top_score}"
-        top_score_surf = font.render(top_score_text, True, (255, 255, 255))
-        top_score_rect = top_score_surf.get_rect(topleft=(10, 10))  # Position in top-left corner
-        display_surface.blit(top_score_surf, top_score_rect)
+        # # Display the top score
+        # high_score_text = f"Top Score: {high_score}"
+        # high_score_surf = font.render(high_score_text, True, (255, 255, 255))
+        # high_score_rect = high_score_surf.get_rect(topleft=(10, 10))  # Position in top-left corner
+        # display_surface.blit(high_score_surf, high_score_rect)
 
     pygame.display.update()
