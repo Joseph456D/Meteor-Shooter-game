@@ -4,6 +4,7 @@ This is a modified version of meteor shooter game from Siddharthbadal/Python-Pro
 https://github.com/Siddharthbadal/Python-Projects/tree/0a968fda935d5d1fc4b8ee89d8db72cc550d594e/Meteor%20Shooter%20game
 Link of original game by the owner
 
+# Features added
 
 -Added a game over screen to show score instead of closing as soon as ship is hit by a meteor
 
