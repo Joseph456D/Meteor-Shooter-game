@@ -12,14 +12,22 @@ def laser_update(laser_list, speed=500):
 
 # Function to display the score on the screen with dynamic box positioning
 def display_score():
+    global border_width, inflation_height, inflation_width
     if not game_over:
         text_surf = font.render(f"Score: {score}", True, (255, 255, 255))
 
         # Dynamically center the score text at the bottom
         text_rect = text_surf.get_rect(center=(WINDOW_WIDTH / 2, WINDOW_HEIGHT - (WINDOW_HEIGHT * 0.1)))
 
-        # Draw the score box (white border with a rounded corner)
-        pygame.draw.rect(display_surface, 'white', text_rect.inflate(30, 40), width=10, border_radius=5)
+        # Calculate dynamic border width based on window size, but keep the border_radius fixed at 5
+        border_width = int(WINDOW_WIDTH * 0.008)  # Scale border width based on window width
+
+        # Inflate the text_rect box for padding (still dynamic)
+        inflation_width = int(WINDOW_WIDTH * 0.03)  # Scale horizontal padding
+        inflation_height = int(WINDOW_HEIGHT * 0.05)  # Scale vertical padding
+
+        # Draw the score box (white border with a rounded corner and radius 5
+        pygame.draw.rect(display_surface, 'white', text_rect.inflate(inflation_width, inflation_height), width=border_width, border_radius=5)
         
         # Display the score text inside the box
         display_surface.blit(text_surf, text_rect)
@@ -153,8 +161,7 @@ volume_off_icon = pygame.transform.scale(pygame.image.load('./Resources/volume_o
 mute_button_rect = volume_on_icon.get_rect(bottomleft=(10, WINDOW_HEIGHT - 10))
 
 
-# Function to scale font size, buttons, and objects dynamically based on window size
-# Function to scale assets based on window size while preserving the aspect ratio
+# Function to scale assets (font size, buttons, and objects) based on window size while preserving the aspect ratio
 def scale_assets():
     global font, quit_button_rect, restart_button_rect, font_size, button_width, button_height, volume_on_icon, volume_off_icon, mute_button_rect
     global ship_surf, laser_surf, meteor_surf
@@ -335,7 +342,7 @@ while True:
         text_surf = font.render(f"Score: {score}", True, (255, 255, 255))
         text_rect = text_surf.get_rect(center=(WINDOW_WIDTH / 2, WINDOW_HEIGHT - (WINDOW_HEIGHT * 0.1)))  # Updated dynamic position
         display_surface.blit(text_surf, text_rect)
-        pygame.draw.rect(display_surface, 'white', text_rect.inflate(30, 40), width=10, border_radius=5)
+        pygame.draw.rect(display_surface, 'white', text_rect.inflate(inflation_width, inflation_height), width=border_width, border_radius=5)
 
         # Display time survived
         time_played_text = f"{minutes:02}:{seconds:02}"  # Format as MM:SS
