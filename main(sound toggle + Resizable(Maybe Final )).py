@@ -12,10 +12,8 @@ def laser_update(laser_list, speed=500):
 
 # Function to display the score on the screen with dynamic box positioning
 def display_score():
-    global score_text
     if not game_over:
-        score_text = f"Score: {score}"  # Display the number of meteors destroyed
-        text_surf = font.render(score_text, True, (255, 255, 255))
+        text_surf = font.render(f"Score: {score}", True, (255, 255, 255))
 
         # Dynamically center the score text at the bottom
         text_rect = text_surf.get_rect(center=(WINDOW_WIDTH / 2, WINDOW_HEIGHT - (WINDOW_HEIGHT * 0.1)))

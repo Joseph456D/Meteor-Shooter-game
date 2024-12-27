@@ -11,10 +11,8 @@ def laser_update(laser_list, speed=500):
 
 # Function to display the score on the screen
 def display_score():
-    global score_text
     if not game_over:
-        score_text = f"Score: {score}"  # Display the number of meteors destroyed
-        text_surf = font.render(score_text, True, (255, 255, 255))
+        text_surf = font.render(f"Score: {score}", True, (255, 255, 255))
         text_rect = text_surf.get_rect(center=(WINDOW_WIDTH/2, WINDOW_HEIGHT-80))
         display_surface.blit(text_surf, text_rect)
         pygame.draw.rect(display_surface, 'white', text_rect.inflate(30, 40), width=10, border_radius=5)
