@@ -20,9 +20,9 @@ Link of original game by the owner
 
 -Add mute button on the left-bottom corner
 
-# Still in progress features 
-
 -Add the start button
+
+# Still in progress features 
 
 -Add pause menu (mute, score, high score, time, achievement tab,  restart, quit)
 
