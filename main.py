@@ -120,6 +120,35 @@ def save_high_score():
         print(f"Error saving high score: {e}")  # Print an error if saving fails
 
 
+# Load the settings from a JSON file
+def load_settings(setting, default=None):
+    try:
+        with open("./Data/settings.json", "r") as file:
+            data = json.load(file)  # Load the JSON data
+            return data.get(
+                setting, default
+            )  # Get the Mute state or return False if not found
+    except (
+        FileNotFoundError,
+        json.JSONDecodeError,
+    ):  # Handle file not found or invalid JSON
+        return default  # Return False if the file does not exist or there is an error
+
+
+# Save the settings to a JSON file
+def save_settings():
+    # Create a dictionary to store the settings
+    data = {
+        "is_muted": is_muted,
+        # "volume_level":volume_level
+    }
+    try:
+        with open("./Data/settings.json", "w") as file:
+            json.dump(data, file, indent=4)  # Write the JSON data to the file
+    except IOError as e:
+        print(f"Error saving settings: {e}")  # Print an error if saving fails
+
+
 # Start menu handling
 def display_start_menu():
     bg_surf = pygame.image.load("./Resources/background.png").convert()
@@ -198,7 +227,6 @@ pygame.time.set_timer(meteror_timer, 500)
 laser_sound = pygame.mixer.Sound("./Resources/laser.ogg")
 explosion_sound = pygame.mixer.Sound("./Resources/explosion.wav")
 background_music = pygame.mixer.Sound("./Resources/music.wav")
-background_music.play(loops=-1)
 
 game_over = False
 button_width, button_height = 270, 60
@@ -223,7 +251,11 @@ high_score = load_high_score()  # Load the high score from the file
 start_time = pygame.time.get_ticks()  # Set the initial start time for the game
 
 # Initialize the mute state and volume icons
-is_muted = False
+is_muted = load_settings("is_muted", False)
+if is_muted:
+    background_music.stop()
+else:
+    background_music.play(loops=-1)
 
 volume_on_icon = pygame.transform.scale(
     pygame.image.load("./Resources/volume_on.png").convert_alpha(), (70, 70)
@@ -301,6 +333,7 @@ while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             save_high_score()  # Save the high score when quitting
+            save_settings()  # Save the settngs when quitting
             pygame.quit()
             sys.exit()
 
@@ -335,11 +368,12 @@ while True:
 
                     else:
                         # Unmute
-                        background_music.play()
+                        background_music.play(loops=-1)
                         explosion_sound.set_volume(1)
                         laser_sound.set_volume(1)
                 if quit_button_rect.collidepoint(event.pos):
                     save_high_score()  # Save high score before quitting
+                    save_settings()  # Save the settngs when quitting
                     pygame.quit()
                     sys.exit()
 
@@ -366,6 +400,7 @@ while True:
             if event.type == pygame.MOUSEBUTTONDOWN and game_over:
                 if quit_button_rect.collidepoint(event.pos):
                     save_high_score()  # Save high score before quitting
+                    save_settings()  # Save the settngs when quitting
                     pygame.quit()
                     sys.exit()
 
@@ -383,7 +418,7 @@ while True:
 
                     else:
                         # Unmute
-                        background_music.play()
+                        background_music.play(loops=-1)
                         explosion_sound.set_volume(1)
                         laser_sound.set_volume(1)
 
