@@ -1,3 +1,7 @@
 {
-    "is_muted": false
+    "volume": true,
+    "sfx_volume": true,
+    "music_volume": true,
+    "sfx_volume_level": 1,
+    "music_volume_level": 1
 }

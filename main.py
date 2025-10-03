@@ -121,26 +121,25 @@ def save_high_score():
 
 
 # Load the settings from a JSON file
-def load_settings(setting, default=None):
+def load_settings():
     try:
         with open("./Data/settings.json", "r") as file:
-            data = json.load(file)  # Load the JSON data
-            return data.get(
-                setting, default
-            )  # Get the Mute state or return False if not found
-    except (
-        FileNotFoundError,
-        json.JSONDecodeError,
-    ):  # Handle file not found or invalid JSON
-        return default  # Return False if the file does not exist or there is an error
+            data = json.load(file)  # Load all settings as a dictionary
+            return data  # Return entire dictionary of settings
+
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}  # Return empty dictionary if file not found or JSON invalid
 
 
 # Save the settings to a JSON file
 def save_settings():
     # Create a dictionary to store the settings
     data = {
-        "is_muted": is_muted,
-        # "volume_level":volume_level
+        "volume": volume,
+        "sfx_volume": sfx_volume,
+        "music_volume": music_volume,
+        "sfx_volume_level": sfx_volume_level,
+        "music_volume_level": music_volume_level,
     }
     try:
         with open("./Data/settings.json", "w") as file:
@@ -168,8 +167,8 @@ def display_start_menu():
     quit_button_text_rect = quit_button_text.get_rect(center=quit_button_rect.center)
     display_surface.blit(quit_button_text, quit_button_text_rect)
 
-    # Display Voulmr Button
-    volume_icon = volume_off_icon if is_muted else volume_on_icon
+    # Display Volume Button
+    volume_icon = volume_on_icon if volume else volume_off_icon
     display_surface.blit(volume_icon, mute_button_rect)
 
     # Draw the start button
@@ -228,6 +227,9 @@ laser_sound = pygame.mixer.Sound("./Resources/laser.ogg")
 explosion_sound = pygame.mixer.Sound("./Resources/explosion.wav")
 background_music = pygame.mixer.Sound("./Resources/music.wav")
 
+sfx = pygame.mixer.Channel(0)
+music = pygame.mixer.Channel(1)
+
 game_over = False
 button_width, button_height = 270, 60
 
@@ -250,13 +252,26 @@ score = 0
 high_score = load_high_score()  # Load the high score from the file
 start_time = pygame.time.get_ticks()  # Set the initial start time for the game
 
-# Initialize the mute state and volume icons
-is_muted = load_settings("is_muted", False)
-if is_muted:
-    background_music.stop()
-else:
-    background_music.play(loops=-1)
+settings = load_settings()
 
+volume = settings["volume"]
+sfx_volume = settings["sfx_volume"]
+sfx_volume_level = settings["sfx_volume_level"]
+music_volume = settings["music_volume"]
+music_volume_level = settings["music_volume_level"]
+
+
+# Initialize the volume state
+if volume:  # Volume is true
+    music.set_volume(music_volume_level)
+    sfx.set_volume(sfx_volume_level)
+    music.play(background_music, loops=-1)
+else:  # Volume is false
+    music.stop()
+    sfx.set_volume(0)
+
+
+# Initialize the volume icons
 volume_on_icon = pygame.transform.scale(
     pygame.image.load("./Resources/volume_on.png").convert_alpha(), (70, 70)
 )
@@ -359,18 +374,16 @@ while True:
                     in_start_menu = False  # Start the game
 
                 if mute_button_rect.collidepoint(event.pos):
-                    is_muted = not is_muted  # Toggle mute state
-                    if is_muted:
-                        # Mute all sounds
-                        background_music.stop()
-                        explosion_sound.set_volume(0)
-                        laser_sound.set_volume(0)
+                    volume = not volume  # Toggle mute state
+                    if volume:
+                        # Unmute
+                        music.play(background_music, loops=-1)
+                        sfx.set_volume(sfx_volume_level)
 
                     else:
-                        # Unmute
-                        background_music.play(loops=-1)
-                        explosion_sound.set_volume(1)
-                        laser_sound.set_volume(1)
+                        # Mute all sounds
+                        music.stop()
+                        sfx.set_volume(0)
                 if quit_button_rect.collidepoint(event.pos):
                     save_high_score()  # Save high score before quitting
                     save_settings()  # Save the settngs when quitting
@@ -385,7 +398,7 @@ while True:
 
                     can_shoot = False
                     shoot_time = pygame.time.get_ticks()
-                    laser_sound.play()
+                    sfx.play(laser_sound)
 
             if event.type == meteror_timer and not game_over:
                 rand_x_pos = randint(-100, WINDOW_WIDTH + 100)
@@ -409,18 +422,16 @@ while True:
 
                 # Toggle mute when clicking the mute button
                 if mute_button_rect.collidepoint(event.pos):
-                    is_muted = not is_muted  # Toggle mute state
-                    if is_muted:
-                        # Mute all sounds
-                        background_music.stop()
-                        explosion_sound.set_volume(0)
-                        laser_sound.set_volume(0)
+                    volume = not volume  # Toggle mute state
+                    if volume:
+                        # Unmute
+                        music.play(background_music, loops=-1)
+                        sfx.set_volume(sfx_volume_level)
 
                     else:
-                        # Unmute
-                        background_music.play(loops=-1)
-                        explosion_sound.set_volume(1)
-                        laser_sound.set_volume(1)
+                        # Mute all sounds
+                        music.stop()
+                        sfx.set_volume(0)
 
     dt = clock.tick(120) / 1000  # Frame rate control
 
@@ -449,7 +460,7 @@ while True:
                     if laser_rect.colliderect(meteor_tuple[0]):
                         meteor_list.remove(meteor_tuple)
                         laser_list.remove(laser_rect)
-                        explosion_sound.play()
+                        sfx.play(explosion_sound)
                         score += 1  # Increment score when a meteor is destroyed
 
         # Display resized background
@@ -508,7 +519,7 @@ while True:
             display_surface.blit(restart_button_text, restart_button_text_rect)
 
             # Display volume icon (mute button)
-            volume_icon = volume_off_icon if is_muted else volume_on_icon
+            volume_icon = volume_on_icon if volume else volume_off_icon
             display_surface.blit(volume_icon, mute_button_rect)
 
             # Display current score
