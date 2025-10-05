@@ -138,6 +138,7 @@ def save_settings():
         "volume": volume,
         "sfx_volume": sfx_volume,
         "music_volume": music_volume,
+        "volume_level": volume_level,
         "sfx_volume_level": sfx_volume_level,
         "music_volume_level": music_volume_level,
     }
@@ -167,9 +168,15 @@ def display_start_menu():
     quit_button_text_rect = quit_button_text.get_rect(center=quit_button_rect.center)
     display_surface.blit(quit_button_text, quit_button_text_rect)
 
-    # Display Volume Button
-    volume_icon = volume_on_icon if volume else volume_off_icon
-    display_surface.blit(volume_icon, mute_button_rect)
+    # Display Settings Button
+    pygame.draw.rect(
+        display_surface, button_color, settings_button_rect_start, border_radius=10
+    )
+    settings_button_text = font.render("Settings", True, (255, 255, 255))
+    settings_button_text_rect = settings_button_text.get_rect(
+        center=settings_button_rect_start.center
+    )
+    display_surface.blit(settings_button_text, settings_button_text_rect)
 
     # Draw the start button
     pygame.draw.rect(
@@ -181,6 +188,290 @@ def display_start_menu():
     display_surface.blit(start_button_surf, start_button_rect)
 
     return start_button_rect
+
+
+# Settings Menu Handling
+def display_settings():
+    # Draw a translucent overlay
+    overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
+    overlay.fill((0, 0, 0, 160))
+    display_surface.blit(overlay, (0, 0))
+
+    # Panel for settings
+    panel_w = int(WINDOW_WIDTH * 0.7)
+    panel_h = int(WINDOW_HEIGHT * 0.7)
+    panel_rect = pygame.Rect(
+        (WINDOW_WIDTH - panel_w) // 2, (WINDOW_HEIGHT - panel_h) // 2, panel_w, panel_h
+    )
+    pygame.draw.rect(display_surface, (40, 40, 40), panel_rect, border_radius=8)
+
+    # Title
+    title_surf = font.render("Settings", True, (255, 255, 255))
+    title_rect = title_surf.get_rect(midtop=(WINDOW_WIDTH / 2, panel_rect.top + 10))
+    display_surface.blit(title_surf, title_rect)
+
+    # Layout positions
+    left_x = panel_rect.left + int(panel_w * 0.08)
+    label_y = title_rect.bottom + 30
+    row_spacing = int(panel_h * 0.12)
+
+    global volume_dragging, sfx_dragging, music_dragging, prev_mouse_pressed, volume, sfx_volume, music_volume, volume_level, sfx_volume_level, music_volume_level
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    mouse_pressed = pygame.mouse.get_pressed()[0]
+
+    # Master Volume Toggle (icon)
+    vol_label = font.render("Master Volume", True, (255, 255, 255))
+    vol_label_rect = vol_label.get_rect(topleft=(left_x, label_y))
+    display_surface.blit(vol_label, vol_label_rect)
+
+    volume_toggle_rect = pygame.Rect(
+        panel_rect.right - int(panel_w * 0.18),
+        vol_label_rect.top,
+        int(panel_w * 0.12),
+        vol_label_rect.height,
+    )
+    pygame.draw.rect(
+        display_surface, (100, 100, 100), volume_toggle_rect, border_radius=6
+    )
+    volume_state = font.render("ON" if volume else "OFF", True, (255, 255, 255))
+    volume_state_rect = volume_state.get_rect(center=volume_toggle_rect.center)
+    display_surface.blit(volume_state, volume_state_rect)
+
+    # SFX Toggle
+    sfx_label = font.render("SFX", True, (255, 255, 255))
+    sfx_label_rect = sfx_label.get_rect(topleft=(left_x, label_y + row_spacing * 2))
+    display_surface.blit(sfx_label, sfx_label_rect)
+
+    sfx_toggle_rect = pygame.Rect(
+        panel_rect.right - int(panel_w * 0.18),
+        sfx_label_rect.top,
+        int(panel_w * 0.12),
+        sfx_label_rect.height,
+    )
+    pygame.draw.rect(display_surface, (100, 100, 100), sfx_toggle_rect, border_radius=6)
+    sfx_state = font.render("ON" if sfx_volume else "OFF", True, (255, 255, 255))
+    sfx_state_rect = sfx_state.get_rect(center=sfx_toggle_rect.center)
+    display_surface.blit(sfx_state, sfx_state_rect)
+
+    # Music Toggle
+    music_label = font.render("Music", True, (255, 255, 255))
+    music_label_rect = music_label.get_rect(topleft=(left_x, label_y + row_spacing * 4))
+    display_surface.blit(music_label, music_label_rect)
+
+    music_toggle_rect = pygame.Rect(
+        panel_rect.right - int(panel_w * 0.18),
+        music_label_rect.top,
+        int(panel_w * 0.12),
+        music_label_rect.height,
+    )
+    pygame.draw.rect(
+        display_surface, (100, 100, 100), music_toggle_rect, border_radius=6
+    )
+    music_state = font.render("ON" if music_volume else "OFF", True, (255, 255, 255))
+    music_state_rect = music_state.get_rect(center=music_toggle_rect.center)
+    display_surface.blit(music_state, music_state_rect)
+
+    # Sliders (SFX and Music)
+    slider_w = int(panel_w * 0.55)
+    slider_h = 4
+    slider_x = left_x
+    volume_slider_y = label_y + row_spacing + 12
+    sfx_slider_y = label_y + row_spacing * 3 + 12
+    music_slider_y = label_y + row_spacing * 5 + 12
+    slider_enabled_color = "green"
+    slider_disabled_color = "gray"
+
+    # Draw slider lines
+    pygame.draw.rect(
+        display_surface,
+        (160, 160, 160),
+        (slider_x, volume_slider_y, slider_w, slider_h),
+    )
+    pygame.draw.rect(
+        display_surface, (160, 160, 160), (slider_x, sfx_slider_y, slider_w, slider_h)
+    )
+    pygame.draw.rect(
+        display_surface, (160, 160, 160), (slider_x, music_slider_y, slider_w, slider_h)
+    )
+
+    # Handle sizes
+    handle_w, handle_h = 12, 12
+
+    # Volume handle
+    volume_handle_x = int(slider_x + volume_level * slider_w) - handle_w // 2
+    volume_handle_rect = pygame.Rect(
+        volume_handle_x, (volume_slider_y - handle_h // 2) + 1, handle_w, handle_h
+    )
+    pygame.draw.rect(
+        display_surface,
+        (slider_enabled_color if volume else slider_disabled_color),
+        volume_handle_rect,
+        border_radius=3,
+    )
+
+    # Volume level
+    volume_label = font.render(f"{int(volume_level * 100)}%", True, (255, 255, 255))
+    volume_rect = pygame.Rect(
+        panel_rect.right - int(panel_w * 0.18),
+        volume_handle_rect.top,
+        int(panel_w * 0.12),
+        volume_handle_rect.height,
+    )
+    volume_label_rect = volume_label.get_rect(center=volume_rect.center)
+    display_surface.blit(volume_label, volume_label_rect)
+
+    # SFX handle
+    sfx_handle_x = int(slider_x + sfx_volume_level * slider_w) - handle_w // 2
+    sfx_handle_rect = pygame.Rect(
+        sfx_handle_x, (sfx_slider_y - handle_h // 2) + 1, handle_w, handle_h
+    )
+    pygame.draw.rect(
+        display_surface,
+        (slider_enabled_color if sfx_volume else slider_disabled_color),
+        sfx_handle_rect,
+        border_radius=3,
+    )
+
+    # SFX volume level
+    sfx_volume_label = font.render(
+        f"{int(sfx_volume_level * 100)}%", True, (255, 255, 255)
+    )
+    sfx_volume_rect = pygame.Rect(
+        panel_rect.right - int(panel_w * 0.18),
+        sfx_handle_rect.top,
+        int(panel_w * 0.12),
+        sfx_handle_rect.height,
+    )
+    sfx_vol_label_rect = sfx_volume_label.get_rect(center=sfx_volume_rect.center)
+    display_surface.blit(sfx_volume_label, sfx_vol_label_rect)
+
+    # Music handle
+    music_handle_x = int(slider_x + music_volume_level * slider_w) - handle_w // 2
+    music_handle_rect = pygame.Rect(
+        music_handle_x, (music_slider_y - handle_h // 2) + 1, handle_w, handle_h
+    )
+    pygame.draw.rect(
+        display_surface,
+        (slider_enabled_color if music_volume else slider_disabled_color),
+        music_handle_rect,
+        border_radius=3,
+    )
+
+    # music volume level
+    music_volume_label = font.render(
+        f"{int(music_volume_level * 100)}%", True, (255, 255, 255)
+    )
+    music_volume_rect = pygame.Rect(
+        panel_rect.right - int(panel_w * 0.18),
+        music_handle_rect.top,
+        int(panel_w * 0.12),
+        music_handle_rect.height,
+    )
+    music_vol_label_rect = music_volume_label.get_rect(center=music_volume_rect.center)
+    display_surface.blit(music_volume_label, music_vol_label_rect)
+
+    # Back Button
+    back_w = int(panel_w * 0.18)
+    back_h = int(panel_h * 0.12)
+    back_rect = pygame.Rect(
+        panel_rect.centerx - back_w // 2,
+        panel_rect.bottom - back_h - 20,
+        back_w,
+        back_h,
+    )
+    pygame.draw.rect(display_surface, button_color, back_rect, border_radius=8)
+    back_text = font.render("Back", True, (255, 255, 255))
+    back_text_rect = back_text.get_rect(center=back_rect.center)
+    display_surface.blit(back_text, back_text_rect)
+
+    # Interaction handling using mouse pressed state and previous pressed state to detect clicks
+    clicked = mouse_pressed and not prev_mouse_pressed
+
+    # Toggle master volume
+    if clicked and volume_toggle_rect.collidepoint((mouse_x, mouse_y)):
+        volume = not volume
+        # Apply immediately
+        if volume and music_volume:
+            music.play(background_music, loops=-1)
+            music.set_volume(music_volume_level * volume_level)
+        else:
+            music.stop()
+        # Update SFX channel
+        sfx.set_volume(
+            sfx_volume_level * volume_level if (sfx_volume and volume) else 0
+        )
+
+    # Toggle SFX
+    if clicked and sfx_toggle_rect.collidepoint((mouse_x, mouse_y)):
+        sfx_volume = not sfx_volume
+        sfx.set_volume(
+            sfx_volume_level * volume_level if (sfx_volume and volume) else 0
+        )
+
+    # Toggle Music
+    if clicked and music_toggle_rect.collidepoint((mouse_x, mouse_y)):
+        music_volume = not music_volume
+        if music_volume and volume:
+            if not music.get_busy():
+                music.play(background_music, loops=-1)
+            music.set_volume(music_volume_level * volume_level)
+        else:
+            music.stop()
+
+    # Start dragging handles on click
+    if clicked and volume_handle_rect.collidepoint((mouse_x, mouse_y)) and volume:
+        volume_dragging = True
+    if clicked and sfx_handle_rect.collidepoint((mouse_x, mouse_y)) and sfx_volume:
+        sfx_dragging = True
+    if clicked and music_handle_rect.collidepoint((mouse_x, mouse_y)) and music_volume:
+        music_dragging = True
+
+    # Stop dragging when mouse released
+    if not mouse_pressed:
+        volume_dragging = False
+        sfx_dragging = False
+        music_dragging = False
+
+    # Update slider values while dragging
+    if volume_dragging and mouse_pressed:
+        # Clamp within slider
+        mx = max(slider_x, min(mouse_x, slider_x + slider_w))
+        volume_level = (mx - slider_x) / slider_w
+        sfx.set_volume(
+            sfx_volume_level * volume_level if (sfx_volume and volume) else 0
+        )
+        music.set_volume(
+            music_volume_level * volume_level if (music_volume and volume) else 0
+        )
+
+    if sfx_dragging and mouse_pressed:
+        mx = max(slider_x, min(mouse_x, slider_x + slider_w))
+        sfx_volume_level = (mx - slider_x) / slider_w
+        sfx.set_volume(
+            sfx_volume_level * volume_level if (sfx_volume and volume) else 0
+        )
+
+    if music_dragging and mouse_pressed:
+        mx = max(slider_x, min(mouse_x, slider_x + slider_w))
+        music_volume_level = (mx - slider_x) / slider_w
+        music.set_volume(
+            music_volume_level * volume_level if (music_volume and volume) else 0
+        )
+
+    # Handle Back button click
+    if clicked and back_rect.collidepoint((mouse_x, mouse_y)):
+        # Save settings and return to previous menu
+        save_settings()
+        global in_settings_menu, in_start_menu
+        in_settings_menu = False
+        if previous_menu == "start":
+            in_start_menu = True
+        else:
+            in_start_menu = False
+
+    # update prev_mouse_pressed at end
+    prev_mouse_pressed = mouse_pressed
 
 
 pygame.init()
@@ -245,6 +536,18 @@ restart_button_rect = pygame.Rect(
     button_width,
     button_height,
 )
+settings_button_rect_start = pygame.Rect(
+    WINDOW_WIDTH / 2 - button_width / 2,
+    WINDOW_HEIGHT / 2 + 150,
+    button_width,
+    button_height,
+)
+settings_button_rect = pygame.Rect(
+    WINDOW_WIDTH / 2 - button_width / 2,
+    WINDOW_HEIGHT / 2 + 240,
+    button_width,
+    button_height,
+)
 button_color = (255, 0, 0)
 
 # Initialize score, high score, and game start time
@@ -255,6 +558,7 @@ start_time = pygame.time.get_ticks()  # Set the initial start time for the game
 settings = load_settings()
 
 volume = settings["volume"]
+volume_level = settings["volume_level"]
 sfx_volume = settings["sfx_volume"]
 sfx_volume_level = settings["sfx_volume_level"]
 music_volume = settings["music_volume"]
@@ -262,13 +566,14 @@ music_volume_level = settings["music_volume_level"]
 
 
 # Initialize the volume state
-if volume:  # Volume is true
-    music.set_volume(music_volume_level)
-    sfx.set_volume(sfx_volume_level)
+# Update music channel
+if volume and music_volume:
     music.play(background_music, loops=-1)
-else:  # Volume is false
+    music.set_volume(music_volume_level * volume_level)
+else:
     music.stop()
-    sfx.set_volume(0)
+# Update SFX channel
+sfx.set_volume(sfx_volume_level * volume_level if (sfx_volume and volume) else 0)
 
 
 # Initialize the volume icons
@@ -279,13 +584,10 @@ volume_off_icon = pygame.transform.scale(
     pygame.image.load("./Resources/volume_off.png").convert_alpha(), (70, 70)
 )
 
-# Position the mute button in the bottom-left corner
-mute_button_rect = volume_on_icon.get_rect(bottomleft=(10, WINDOW_HEIGHT - 10))
-
 
 # Function to scale assets (font size, buttons, and objects) based on window size while preserving the aspect ratio
 def scale_assets():
-    global font, quit_button_rect, restart_button_rect, font_size, button_width, button_height, volume_on_icon, volume_off_icon, mute_button_rect
+    global font, quit_button_rect, restart_button_rect, settings_button_rect, settings_button_rect_start, font_size, button_width, button_height, volume_on_icon, volume_off_icon, mute_button_rect
     global ship_surf, laser_surf, meteor_surf
 
     # Scale font size
@@ -316,6 +618,19 @@ def scale_assets():
         button_width,
         button_height,
     )
+
+    settings_button_rect_start = pygame.Rect(
+        WINDOW_WIDTH / 2 - button_width / 2,
+        WINDOW_HEIGHT / 2 + button_height * 2 + 30,
+        button_width,
+        button_height,
+    )
+    settings_button_rect = pygame.Rect(
+        WINDOW_WIDTH / 2 - button_width / 2,
+        WINDOW_HEIGHT / 2 + button_height * 3 + 60,
+        button_width,
+        button_height,
+    )
     mute_button_rect = volume_on_icon.get_rect(bottomleft=(10, WINDOW_HEIGHT - 10))
 
     # Calculate the scaling factor based on the window width and height, keeping the aspect ratio intact
@@ -343,6 +658,13 @@ def scale_assets():
 
 # Main game loop
 in_start_menu = True  # Variable to track whether we're in the start menu
+in_settings_menu = False  # Variable to track whether we're in the settings menu
+# Settings menu interaction state
+previous_menu = "start"  # track where to return after closing settings
+volume_dragging = False
+sfx_dragging = False
+music_dragging = False
+prev_mouse_pressed = False
 
 while True:
     for event in pygame.event.get():
@@ -373,24 +695,19 @@ while True:
                 if start_button_rect.collidepoint(event.pos):
                     in_start_menu = False  # Start the game
 
-                if mute_button_rect.collidepoint(event.pos):
-                    volume = not volume  # Toggle mute state
-                    if volume:
-                        # Unmute
-                        music.play(background_music, loops=-1)
-                        sfx.set_volume(sfx_volume_level)
+                if settings_button_rect_start.collidepoint(event.pos):
+                    previous_menu = "start"
+                    in_start_menu = False
+                    in_settings_menu = True
+                    display_settings()
 
-                    else:
-                        # Mute all sounds
-                        music.stop()
-                        sfx.set_volume(0)
                 if quit_button_rect.collidepoint(event.pos):
                     save_high_score()  # Save high score before quitting
-                    save_settings()  # Save the settngs when quitting
+                    save_settings()  # Save settngs when quitting
                     pygame.quit()
                     sys.exit()
 
-        else:
+        elif not in_settings_menu and not in_start_menu:
             if event.type == pygame.MOUSEBUTTONDOWN and not game_over:
                 if can_shoot:
                     laser_rect = laser_surf.get_rect(midbottom=ship_rect.midtop)
@@ -420,18 +737,10 @@ while True:
                 if restart_button_rect.collidepoint(event.pos):
                     restart_game()
 
-                # Toggle mute when clicking the mute button
-                if mute_button_rect.collidepoint(event.pos):
-                    volume = not volume  # Toggle mute state
-                    if volume:
-                        # Unmute
-                        music.play(background_music, loops=-1)
-                        sfx.set_volume(sfx_volume_level)
-
-                    else:
-                        # Mute all sounds
-                        music.stop()
-                        sfx.set_volume(0)
+                if settings_button_rect.collidepoint(event.pos):
+                    previous_menu = "game"
+                    in_settings_menu = True
+                    display_settings()
 
     dt = clock.tick(120) / 1000  # Frame rate control
 
@@ -440,7 +749,9 @@ while True:
     if in_start_menu:
         # Show the start menu and wait for user input
         display_start_menu()
-    else:
+    elif in_settings_menu:
+        display_settings()
+    elif not in_settings_menu and not in_start_menu:
         if not game_over:
             ship_rect.center = pygame.mouse.get_pos()
 
@@ -518,14 +829,20 @@ while True:
             )
             display_surface.blit(restart_button_text, restart_button_text_rect)
 
-            # Display volume icon (mute button)
-            volume_icon = volume_on_icon if volume else volume_off_icon
-            display_surface.blit(volume_icon, mute_button_rect)
+            # Display Settings button
+            pygame.draw.rect(
+                display_surface, button_color, settings_button_rect, border_radius=5
+            )
+            settings_button_text = font.render("Settings", True, (255, 255, 255))
+            settings_button_text_rect = settings_button_text.get_rect(
+                center=settings_button_rect.center
+            )
+            display_surface.blit(settings_button_text, settings_button_text_rect)
 
             # Display current score
             text_surf = font.render(f"Score: {score}", True, (255, 255, 255))
             text_rect = text_surf.get_rect(
-                center=(WINDOW_WIDTH / 2, WINDOW_HEIGHT - (WINDOW_HEIGHT * 0.1))
+                center=(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 - (WINDOW_HEIGHT * 0.2))
             )  # Updated dynamic position
             display_surface.blit(text_surf, text_rect)
             pygame.draw.rect(

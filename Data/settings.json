@@ -2,6 +2,7 @@
     "volume": true,
     "sfx_volume": true,
     "music_volume": true,
-    "sfx_volume_level": 1,
-    "music_volume_level": 1
+    "volume_level": 0.5,
+    "sfx_volume_level": 0.5,
+    "music_volume_level": 0.5
 }
