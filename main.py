@@ -553,7 +553,6 @@ button_color = (255, 0, 0)
 # Initialize score, high score, and game start time
 score = 0
 high_score = load_high_score()  # Load the high score from the file
-start_time = pygame.time.get_ticks()  # Set the initial start time for the game
 
 settings = load_settings()
 
@@ -694,6 +693,9 @@ while True:
                 start_button_rect = display_start_menu()
                 if start_button_rect.collidepoint(event.pos):
                     in_start_menu = False  # Start the game
+                    start_time = (
+                        pygame.time.get_ticks()
+                    )  # Set the initial start time for the game
 
                 if settings_button_rect_start.collidepoint(event.pos):
                     previous_menu = "start"
