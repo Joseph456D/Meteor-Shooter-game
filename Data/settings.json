@@ -1,8 +1,8 @@
 {
-    "volume": true,
+    "volume": false,
     "sfx_volume": true,
     "music_volume": true,
     "volume_level": 0.5,
-    "sfx_volume_level": 0.5,
-    "music_volume_level": 0.5
+    "sfx_volume_level": 0.1524390243902439,
+    "music_volume_level": 0.10569105691056911
 }

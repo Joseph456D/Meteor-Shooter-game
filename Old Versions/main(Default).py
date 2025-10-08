@@ -2,6 +2,7 @@ import pygame, sys
 import json
 from random import randint, uniform
 
+
 # Update the laser list to remove lasers that go off-screen
 def laser_update(laser_list, speed=500):
     for rect in laser_list[:]:
@@ -9,13 +10,21 @@ def laser_update(laser_list, speed=500):
         if rect.bottom < 0:
             laser_list.remove(rect)
 
+
 # Function to display the score on the screen
 def display_score():
     if not game_over:
         text_surf = font.render(f"Score: {score}", True, (255, 255, 255))
-        text_rect = text_surf.get_rect(center=(WINDOW_WIDTH/2, WINDOW_HEIGHT-80))
+        text_rect = text_surf.get_rect(center=(WINDOW_WIDTH / 2, WINDOW_HEIGHT - 80))
         display_surface.blit(text_surf, text_rect)
-        pygame.draw.rect(display_surface, 'white', text_rect.inflate(30, 40), width=10, border_radius=5)
+        pygame.draw.rect(
+            display_surface,
+            "white",
+            text_rect.inflate(30, 40),
+            width=10,
+            border_radius=5,
+        )
+
 
 # Function to display the time played in the top-right corner
 def display_time_played():
@@ -28,8 +37,11 @@ def display_time_played():
         time_played_text = f"{minutes:02}:{seconds:02}"  # Format as MM:SS
 
         time_text_surf = font.render(time_played_text, True, (255, 255, 255))
-        time_text_rect = time_text_surf.get_rect(topright=(WINDOW_WIDTH - 10, 10))  # Position in top-right corner
+        time_text_rect = time_text_surf.get_rect(
+            topright=(WINDOW_WIDTH - 10, 10)
+        )  # Position in top-right corner
         display_surface.blit(time_text_surf, time_text_rect)
+
 
 # Function for managing the shooting delay
 def laser_timer(can_shoot, duration=500):
@@ -39,6 +51,7 @@ def laser_timer(can_shoot, duration=500):
             can_shoot = True
     return can_shoot
 
+
 # Function to update meteors' positions
 def meteor_update(meteor_list, speed=500):
     for meteor_tuple in meteor_list[:]:
@@ -47,6 +60,7 @@ def meteor_update(meteor_list, speed=500):
         meteor_rect.move_ip(direction * speed * dt)
         if meteor_rect.top > WINDOW_HEIGHT:
             meteor_list.remove(meteor_tuple)
+
 
 # Restart the game by resetting variables
 def restart_game():
@@ -63,13 +77,19 @@ def restart_game():
     pygame.event.set_grab(True)
     start_time = pygame.time.get_ticks()  # Reset the game start time
 
+
 # Load the high score from a JSON file
 def load_high_score():
     try:
-        with open('./Data/high_score.json', 'r') as file:
+        with open("./Data/high_score.json", "r") as file:
             data = json.load(file)  # Load the JSON data
-            return data.get("high_score", 0)  # Get the high score or return 0 if not found
-    except (FileNotFoundError, json.JSONDecodeError):  # Handle file not found or invalid JSON
+            return data.get(
+                "high_score", 0
+            )  # Get the high score or return 0 if not found
+    except (
+        FileNotFoundError,
+        json.JSONDecodeError,
+    ):  # Handle file not found or invalid JSON
         return 0  # Return 0 if the file does not exist or there is an error
 
 
@@ -77,7 +97,7 @@ def load_high_score():
 def save_high_score():
     data = {"high_score": high_score}  # Create a dictionary to store the high score
     try:
-        with open('./Data/high_score.json', 'w') as file:
+        with open("./Data/high_score.json", "w") as file:
             json.dump(data, file, indent=4)  # Write the JSON data to the file
     except IOError as e:
         print(f"Error saving high score: {e}")  # Print an error if saving fails
@@ -90,33 +110,35 @@ display_surface = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 clock = pygame.time.Clock()
 pygame.display.set_caption("Meteor Shooter")
 
-ship_surf = pygame.image.load('./Resources/ship.png').convert_alpha()
-ship_rect = ship_surf.get_rect(center=(WINDOW_WIDTH/2, WINDOW_HEIGHT/2))
+ship_surf = pygame.image.load("./Resources/ship.png").convert_alpha()
+ship_rect = ship_surf.get_rect(center=(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2))
 
-laser_surf = pygame.image.load('./Resources/laser.png').convert_alpha()
+laser_surf = pygame.image.load("./Resources/laser.png").convert_alpha()
 laser_list = []
 
 can_shoot = True
 shoot_time = None
 
-meteor_surf = pygame.image.load('./Resources/meteor.png')
+meteor_surf = pygame.image.load("./Resources/meteor.png")
 meteor_list = []
 
-bg_surf = pygame.image.load('./Resources/background.png').convert()
+bg_surf = pygame.image.load("./Resources/background.png").convert()
 
-font = pygame.font.Font('./Resources/subatomic.ttf', 50)
+font = pygame.font.Font("./Resources/subatomic.ttf", 50)
 
-meteror_timer = pygame.USEREVENT + 1
-pygame.time.set_timer(meteror_timer, 500)
+meteor_timer = pygame.USEREVENT + 1
+pygame.time.set_timer(meteor_timer, 500)
 
-laser_sound = pygame.mixer.Sound('./Resources/laser.ogg')
-explosion_sound = pygame.mixer.Sound('./Resources/explosion.wav')
-background_music = pygame.mixer.Sound('./Resources/music.wav')
+laser_sound = pygame.mixer.Sound("./Resources/laser.ogg")
+explosion_sound = pygame.mixer.Sound("./Resources/explosion.wav")
+background_music = pygame.mixer.Sound("./Resources/music.wav")
 background_music.play(loops=-1)
 
 game_over = False
 quit_button_rect = pygame.Rect(WINDOW_WIDTH / 2 - 135, WINDOW_HEIGHT / 2 + 60, 270, 60)
-restart_button_rect = pygame.Rect(WINDOW_WIDTH / 2 - 135, WINDOW_HEIGHT / 2 + 155, 270, 60)
+restart_button_rect = pygame.Rect(
+    WINDOW_WIDTH / 2 - 135, WINDOW_HEIGHT / 2 + 155, 270, 60
+)
 button_color = (255, 0, 0)
 
 # Initialize score, top score, and game start time
@@ -140,7 +162,7 @@ while True:
                 shoot_time = pygame.time.get_ticks()
                 laser_sound.play()
 
-        if event.type == meteror_timer and not game_over:
+        if event.type == meteor_timer and not game_over:
             rand_x_pos = randint(-100, WINDOW_WIDTH + 100)
             rand_y_pos = randint(-100, -50)
 
@@ -194,7 +216,9 @@ while True:
     # Display the top score
     high_score_text = f"High Score: {high_score}"
     high_score_surf = font.render(high_score_text, True, (255, 255, 255))
-    high_score_rect = high_score_surf.get_rect(topleft=(10, 10))  # Position in top-left corner
+    high_score_rect = high_score_surf.get_rect(
+        topleft=(10, 10)
+    )  # Position in top-left corner
     display_surface.blit(high_score_surf, high_score_rect)
 
     # Display meteors and lasers
@@ -212,33 +236,47 @@ while True:
 
         game_over_text = "Game Over!"
         game_over_surf = font.render(game_over_text, True, (255, 0, 0))
-        game_over_rect = game_over_surf.get_rect(center=(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2))
+        game_over_rect = game_over_surf.get_rect(
+            center=(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2)
+        )
         display_surface.blit(game_over_surf, game_over_rect)
 
         # Display buttons
         # Display Quit button
         pygame.draw.rect(display_surface, button_color, quit_button_rect)
         quit_button_text = font.render("Quit", True, (255, 255, 255))
-        quit_button_text_rect = quit_button_text.get_rect(center=quit_button_rect.center)
+        quit_button_text_rect = quit_button_text.get_rect(
+            center=quit_button_rect.center
+        )
         display_surface.blit(quit_button_text, quit_button_text_rect)
 
         # Display Restart button
         pygame.draw.rect(display_surface, button_color, restart_button_rect)
         restart_button_text = font.render("Restart", True, (255, 255, 255))
-        restart_button_text_rect = restart_button_text.get_rect(center=restart_button_rect.center)
+        restart_button_text_rect = restart_button_text.get_rect(
+            center=restart_button_rect.center
+        )
         display_surface.blit(restart_button_text, restart_button_text_rect)
 
         # Display time played
         time_played_text = f"{minutes:02}:{seconds:02}"  # Format as MM:SS
         time_text_surf = font.render(time_played_text, True, (255, 255, 255))
-        time_text_rect = time_text_surf.get_rect(topright=(WINDOW_WIDTH - 10, 10))  # Position in top-right corner
+        time_text_rect = time_text_surf.get_rect(
+            topright=(WINDOW_WIDTH - 10, 10)
+        )  # Position in top-right corner
         display_surface.blit(time_text_surf, time_text_rect)
 
         # Display current score
         text_surf = font.render(f"Score: {score}", True, (255, 255, 255))
-        text_rect = text_surf.get_rect(center=(WINDOW_WIDTH/2, WINDOW_HEIGHT-80))
+        text_rect = text_surf.get_rect(center=(WINDOW_WIDTH / 2, WINDOW_HEIGHT - 80))
         display_surface.blit(text_surf, text_rect)
-        pygame.draw.rect(display_surface, 'white', text_rect.inflate(30, 40), width=10, border_radius=5)
+        pygame.draw.rect(
+            display_surface,
+            "white",
+            text_rect.inflate(30, 40),
+            width=10,
+            border_radius=5,
+        )
 
         # # Display the top score
         # high_score_text = f"Top Score: {high_score}"

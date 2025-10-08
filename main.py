@@ -1,6 +1,7 @@
-import pygame, sys
+import pygame
+import sys, os
 import json
-from random import randint, uniform
+from random import randint, uniform, choice
 
 
 # Update the laser list to remove lasers that go off-screen
@@ -72,8 +73,8 @@ def laser_timer(can_shoot, duration=500):
 # Function to update meteors' positions
 def meteor_update(meteor_list, speed=500):
     for meteor_tuple in meteor_list[:]:
-        direction = meteor_tuple[1]
-        meteor_rect = meteor_tuple[0]
+        # meteor_tuple: (surf, rect, direction, mask)
+        surf, meteor_rect, direction, m_mask = meteor_tuple
         meteor_rect.move_ip(direction * speed * dt)
         if meteor_rect.top > WINDOW_HEIGHT:
             meteor_list.remove(meteor_tuple)
@@ -112,12 +113,14 @@ def load_high_score():
 
 # Save the high score to a JSON file
 def save_high_score():
-    data = {"high_score": high_score}  # Create a dictionary to store the high score
+    # Create a dictionary to store the high score
+    data = {"high_score": high_score}
     try:
         with open("./Data/high_score.json", "w") as file:
             json.dump(data, file, indent=4)  # Write the JSON data to the file
     except IOError as e:
-        print(f"Error saving high score: {e}")  # Print an error if saving fails
+        # Print an error if saving fails
+        print(f"Error saving high score: {e}")
 
 
 # Load the settings from a JSON file
@@ -475,7 +478,8 @@ def display_settings():
 
 
 pygame.init()
-
+icon = pygame.image.load("./Resources/icon.png")
+pygame.display.set_icon(icon)
 # Define initial window size
 WINDOW_WIDTH, WINDOW_HEIGHT = 1280, 720
 display_surface = pygame.display.set_mode(
@@ -491,10 +495,27 @@ ship_rect = ship_surf.get_rect(center=(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2))
 laser_surf = pygame.image.load("./Resources/laser.png").convert_alpha()
 laser_list = []
 
+# Masks for pixel-perfect collision
+ship_mask = pygame.mask.from_surface(ship_surf)
+laser_mask = pygame.mask.from_surface(laser_surf)
+
 can_shoot = True
 shoot_time = None
 
-meteor_surf = pygame.image.load("./Resources/meteor.png")
+
+# Load multiple images from a directory
+meteor_surfaces = []
+for filename in os.listdir("./Resources/Meteor"):
+    image_path = os.path.join("./Resources/Meteor", filename)
+    try:
+        image = pygame.image.load(
+            image_path
+        ).convert_alpha()  # .convert_alpha() for transparency
+        image = pygame.transform.scale_by(image, 0.1)
+        meteor_surfaces.append(image)
+    except pygame.error as e:
+        print(f"Error loading {filename}: {e}")
+
 meteor_list = []
 
 bg_surf = pygame.image.load("./Resources/background.png").convert()
@@ -511,8 +532,8 @@ def calculate_font_size():
 font_size = calculate_font_size()  # Make font size responsive to window width
 font = pygame.font.Font("./Resources/subatomic.ttf", font_size)
 
-meteror_timer = pygame.USEREVENT + 1
-pygame.time.set_timer(meteror_timer, 500)
+meteor_timer = pygame.USEREVENT + 1
+pygame.time.set_timer(meteor_timer, 500)
 
 laser_sound = pygame.mixer.Sound("./Resources/laser.ogg")
 explosion_sound = pygame.mixer.Sound("./Resources/explosion.wav")
@@ -587,14 +608,15 @@ volume_off_icon = pygame.transform.scale(
 # Function to scale assets (font size, buttons, and objects) based on window size while preserving the aspect ratio
 def scale_assets():
     global font, quit_button_rect, restart_button_rect, settings_button_rect, settings_button_rect_start, font_size, button_width, button_height, volume_on_icon, volume_off_icon, mute_button_rect
-    global ship_surf, laser_surf, meteor_surf
+    global ship_surf, laser_surf, meteor_surfaces, ship_mask, laser_mask
 
     # Scale font size
     font_size = calculate_font_size()
     font = pygame.font.Font("./Resources/subatomic.ttf", font_size)
 
     # Define a scaling factor for the volume icon
-    icon_size = int(WINDOW_WIDTH * 0.055)  # Scale the icon size based on window width
+    # Scale the icon size based on window width
+    icon_size = int(WINDOW_WIDTH * 0.055)
 
     # Scale the volume icons
     volume_on_icon = pygame.transform.scale(volume_on_icon, (icon_size, icon_size))
@@ -644,15 +666,30 @@ def scale_assets():
         ship_surf, (int(99 * scale_factor), int(75 * scale_factor))
     )
 
+    # Update ship mask after scaling
+    ship_mask = pygame.mask.from_surface(ship_surf)
+
     # Resize laser based on its original size (13x54) using the scale factor
     laser_surf = pygame.transform.scale(
         laser_surf, (int(13 * scale_factor), int(54 * scale_factor))
     )
 
+    # Update laser mask after scaling
+    laser_mask = pygame.mask.from_surface(laser_surf)
+
     # Resize meteor based on its original size (101x84) using the scale factor
-    meteor_surf = pygame.transform.scale(
-        meteor_surf, (int(101 * scale_factor), int(84 * scale_factor))
-    )
+    for i, surf in enumerate(meteor_surfaces):
+        new_w = max(1, int(surf.get_width() * scale_factor))
+        new_h = max(1, int(surf.get_height() * scale_factor))
+        meteor_surfaces[i] = pygame.transform.scale(surf, (new_w, new_h))
+
+    # Update masks for existing meteors in meteor_list
+    for idx, meteor in enumerate(list(meteor_list)):
+        # meteor structure may be (surf, rect, direction) or (surf, rect, direction, mask)
+        if len(meteor) == 4:
+            surf, rect, direction, _ = meteor
+            new_mask = pygame.mask.from_surface(surf)
+            meteor_list[idx] = (surf, rect, direction, new_mask)
 
 
 # Main game loop
@@ -719,15 +756,32 @@ while True:
                     shoot_time = pygame.time.get_ticks()
                     sfx.play(laser_sound)
 
-            if event.type == meteror_timer and not game_over:
+            if event.type == meteor_timer and not game_over:
                 rand_x_pos = randint(-100, WINDOW_WIDTH + 100)
                 rand_y_pos = randint(-100, -50)
 
-                meteor_rect = meteor_surf.get_rect(center=(rand_x_pos, rand_y_pos))
+                meteor_surf_choice = choice(meteor_surfaces)
+                meteor_rect = meteor_surf_choice.get_rect(
+                    center=(rand_x_pos, rand_y_pos)
+                )
 
-                direction = pygame.math.Vector2(uniform(-0.5, 0.5), 1)
+                object_pos = pygame.math.Vector2(rand_x_pos, rand_y_pos)
+                mouse_pos = pygame.math.Vector2(
+                    pygame.mouse.get_pos()
+                ) + pygame.math.Vector2(uniform(-0.5, 0.5), 1)
 
-                meteor_list.append((meteor_rect, direction))
+                direction = mouse_pos - object_pos
+
+                if direction.length() != 0:  # Avoid division by zero
+                    direction = direction.normalize()
+                # direction = pygame.math.Vector2(uniform(-0.5, 0.5), 1)
+
+                # Create mask for pixel-perfect collision
+                meteor_mask = pygame.mask.from_surface(meteor_surf_choice)
+
+                meteor_list.append(
+                    (meteor_surf_choice, meteor_rect, direction, meteor_mask)
+                )
 
             if event.type == pygame.MOUSEBUTTONDOWN and game_over:
                 if quit_button_rect.collidepoint(event.pos):
@@ -759,22 +813,39 @@ while True:
 
             laser_update(laser_list)
             can_shoot = laser_timer(can_shoot, 400)
-            meteor_update(meteor_list)
+            meteor_update(meteor_list, choice(range(500, 1001, 10)))
 
             for meteor_tuple in meteor_list[:]:
-                meteor_rect = meteor_tuple[0]
+                surf, meteor_rect, direction, meteor_mask = meteor_tuple
+                # First check bounding box overlap for speed
                 if ship_rect.colliderect(meteor_rect):
-                    game_over = True
-                    pygame.mouse.set_visible(True)
-                    pygame.event.set_grab(False)
+                    # Calculate overlap offset
+                    offset = (
+                        meteor_rect.left - ship_rect.left,
+                        meteor_rect.top - ship_rect.top,
+                    )
+                    if ship_mask.overlap(meteor_mask, offset):
+                        game_over = True
+                        pygame.mouse.set_visible(True)
+                        pygame.event.set_grab(False)
 
             for laser_rect in laser_list[:]:
                 for meteor_tuple in meteor_list[:]:
-                    if laser_rect.colliderect(meteor_tuple[0]):
-                        meteor_list.remove(meteor_tuple)
-                        laser_list.remove(laser_rect)
-                        sfx.play(explosion_sound)
-                        score += 1  # Increment score when a meteor is destroyed
+                    surf, meteor_rect, direction, meteor_mask = meteor_tuple
+                    if laser_rect.colliderect(meteor_rect):
+                        # calculate offset of meteor relative to laser
+                        offset = (
+                            meteor_rect.left - laser_rect.left,
+                            meteor_rect.top - laser_rect.top,
+                        )
+                        if laser_mask.overlap(meteor_mask, offset):
+
+                            meteor_list.remove(meteor_tuple)
+
+                            laser_list.remove(laser_rect)
+
+                            sfx.play(explosion_sound)
+                            score += 1  # Increment score when a meteor is destroyed
 
         # Display resized background
         display_surface.blit(bg_surf, (0, 0))
@@ -793,7 +864,7 @@ while True:
 
         # Display meteors and lasers
         for meteor_tuple in meteor_list:
-            display_surface.blit(meteor_surf, meteor_tuple[0])
+            display_surface.blit(meteor_tuple[0], meteor_tuple[1])
         for rect in laser_list:
             display_surface.blit(laser_surf, rect)
 
