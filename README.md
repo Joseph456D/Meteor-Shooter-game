@@ -13,18 +13,24 @@ This is a modified version of meteor shooter game from Siddharthbadal/Python-Pro
 
 - Added top score to the game over screen
 
-- Added restart option to play the game again without reruning the file
+- Added restart option to play the game again without rerunning the file
 
-- Change ship, buttons and meteor size to dynamic
+- Changed ship, buttons and meteor size to dynamic
 
-- Add mute button on the left-bottom corner
+- Added the start button
 
-- Add the start button
+- Added options menu
+
+  - Mute Button
+
+  - Buttons for individually controlling Music and SFX
+
+  - Sliders for controlling Volume, Music, and SFX
+
+- Different varieties of meteors
 
 ## Still in progress features
 
 - Add pause menu (mute, score, high score, time, achievement tab, restart, quit)
 
 - Achievements and achievements tab (opened by a button on right corner)
-
-- Mute and achievement buttons only available at game over and pause screens
