@@ -80,6 +80,31 @@ def meteor_update(meteor_list, speed=500):
             meteor_list.remove(meteor_tuple)
 
 
+# Explosion sprite for animated explosion when meteor is destroyed
+class Explosion(pygame.sprite.Sprite):
+    def __init__(self, pos, frames):
+        super().__init__()
+        self.frames = frames
+        self.frame_rate = 60  # frames per second for animation
+        self.index = 0
+        self.image = self.frames[0]
+        self.rect = self.image.get_rect(center=pos)
+        self.time_acc = 0.0
+
+    def update(self, dt):
+        # advance animation based on dt
+        if len(self.frames) <= 1:
+            return
+        self.time_acc += dt
+        if self.time_acc >= 1 / self.frame_rate:
+            self.time_acc = 0.0
+            self.index += 1
+            if self.index >= len(self.frames):
+                self.kill()
+            else:
+                self.image = self.frames[self.index]
+
+
 # Restart the game by resetting variables
 def restart_game():
     global score, game_over, ship_rect, laser_list, meteor_list, can_shoot, shoot_time, start_time
@@ -511,12 +536,31 @@ for filename in os.listdir("./Resources/Meteor"):
         image = pygame.image.load(
             image_path
         ).convert_alpha()  # .convert_alpha() for transparency
-        image = pygame.transform.scale_by(image, 0.1)
         meteor_surfaces.append(image)
     except pygame.error as e:
         print(f"Error loading {filename}: {e}")
 
 meteor_list = []
+
+
+# Load explosion frames
+explosion_frames = []
+
+for filename in os.listdir("./Resources/Explosion"):
+    image_path = os.path.join("./Resources/Explosion", filename)
+    try:
+        image = pygame.image.load(
+            image_path
+        ).convert_alpha()  # .convert_alpha() for transparency
+        image = pygame.transform.scale_by(image, 0.8)
+        explosion_frames.append(image)
+    except pygame.error as e:
+        print(f"Error loading {filename}: {e}")
+
+
+# Sprite group
+explosion_group = pygame.sprite.Group()
+
 
 bg_surf = pygame.image.load("./Resources/background.png").convert()
 
@@ -676,10 +720,10 @@ def scale_assets():
     # Update laser mask after scaling
     laser_mask = pygame.mask.from_surface(laser_surf)
 
-    # Resize meteor based on its original size (101x84) using the scale factor
+    # Resize meteor based on its original size using the scale factor
     for i, surf in enumerate(meteor_surfaces):
-        new_w = max(1, int(surf.get_width() * scale_factor))
-        new_h = max(1, int(surf.get_height() * scale_factor))
+        new_w = int(160 * scale_factor)
+        new_h = int(114 * scale_factor)
         meteor_surfaces[i] = pygame.transform.scale(surf, (new_w, new_h))
 
     # Update masks for existing meteors in meteor_list
@@ -689,6 +733,16 @@ def scale_assets():
             surf, rect, direction, _ = meteor
             new_mask = pygame.mask.from_surface(surf)
             meteor_list[idx] = (surf, rect, direction, new_mask)
+
+    # Rescale explosion frames based on current scale factor
+    global explosion_frames
+    if explosion_frames:
+        scaled = []
+        for f in explosion_frames:
+            new_w = max(1, int(f.get_width() * scale_factor))
+            new_h = max(1, int(f.get_height() * scale_factor))
+            scaled.append(pygame.transform.smoothscale(f, (new_w, new_h)))
+        explosion_frames = scaled
 
 
 # Main game loop
@@ -839,6 +893,11 @@ while True:
                         )
                         if laser_mask.overlap(meteor_mask, offset):
 
+                            # Spawn explosion at meteor center
+                            explosion = Explosion(meteor_rect.center, explosion_frames)
+                            explosion_group.add(explosion)
+
+                            # remove meteor and laser
                             meteor_list.remove(meteor_tuple)
 
                             laser_list.remove(laser_rect)
@@ -868,6 +927,10 @@ while True:
             display_surface.blit(laser_surf, rect)
 
         display_surface.blit(ship_surf, ship_rect)
+
+        # Update and draw explosions
+        explosion_group.update(dt)
+        explosion_group.draw(display_surface)
 
         if game_over:
             # Save the high score if the current score is greater
