@@ -607,7 +607,7 @@ volume_off_icon = pygame.transform.scale(
 
 # Function to scale assets (font size, buttons, and objects) based on window size while preserving the aspect ratio
 def scale_assets():
-    global font, quit_button_rect, restart_button_rect, settings_button_rect, settings_button_rect_start, font_size, button_width, button_height, volume_on_icon, volume_off_icon, mute_button_rect
+    global font, quit_button_rect, restart_button_rect, settings_button_rect, settings_button_rect_start, font_size, button_width, button_height, volume_on_icon, volume_off_icon
     global ship_surf, laser_surf, meteor_surfaces, ship_mask, laser_mask
 
     # Scale font size
@@ -652,7 +652,6 @@ def scale_assets():
         button_width,
         button_height,
     )
-    mute_button_rect = volume_on_icon.get_rect(bottomleft=(10, WINDOW_HEIGHT - 10))
 
     # Calculate the scaling factor based on the window width and height, keeping the aspect ratio intact
     scale_factor_width = WINDOW_WIDTH / 1280
